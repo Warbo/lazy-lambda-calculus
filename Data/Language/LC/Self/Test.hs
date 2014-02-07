@@ -28,33 +28,33 @@ selfTestMap :: Map String Test
 selfTestMap = fromList [
 
                 ("()",
-                 Test $ \n x -> let u = mse () :@ Const x in
-                                closed (u :: Term Nat) ==>
-                                trueIn (n+2) (fmap (== vc x) (eval u))),
+                 Test $ \x -> let u = mse () :@ Const x in
+                              closed (u :: Term Nat) ==>
+                              equalIn 2 x u),
 
                 ("true",
                  Test $ \n x y -> let t = mse True :@ Const x :@ y in
                                   closed (t :: Term Nat) ==>
-                                  notFalseIn n (fmap (== vc x) (eval t))),
+                                  notDiffIn n x t),
 
                 ("false",
                  Test $ \n x y -> let f = mse False :@ x :@ Const y in
                                   closed (f :: Term Nat) ==>
-                                  notFalseIn n (fmap (== vc y) (eval f))),
+                                  notDiffIn n y f),
 
                 ("z",
                  Test $ \n x y -> let z = mse Z :@ Const x :@ y in
                                   closed (z :: Term Nat) ==>
-                                  notFalseIn n (fmap (== vc x) (eval z))),
-
+                                  notDiffIn n x z),
+{-
                 ("s",
                  Test $ \n m -> let s = mse (S m)
                                     wrap  Z    x = x :@ Const Z
                                     wrap (S n) x = wrap n x :@ Const (S n) in
-                                notFalseIn n (fmap (== vc 0) (eval (wrap m s)))),
-
+                                notDiffIn n 0 (wrap m s)),
+-}
                 ("zFalse",
-                 Test $ \n m -> trueIn (n+5) (fmap (== vc (m :: Nat)) (eval (zComb :@ mse False :@ Const m))))
+                 Test $ \x -> equalIn 5 x (zComb :@ mse False :@ Const (x :: Int)))
               ]
 
 selfTest  = testRunner  selfTestMap

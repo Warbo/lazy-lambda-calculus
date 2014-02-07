@@ -28,7 +28,8 @@ instance Serial a => Serial (Term a) where
            cons1 Lam \/
            cons2 (:@)
 
-equalIn n x y = trueIn n (fmap (== C x) (eval y))
+equalIn   n x y = trueIn     n (fmap (== C x) (eval y))
+notDiffIn n x y = notFalseIn n (fmap (== C x) (eval y))
 
 lcTestMap :: Map String Test
 lcTestMap = let i = (Lam 0 :: Term Nat) in
@@ -41,16 +42,16 @@ lcTestMap = let i = (Lam 0 :: Term Nat) in
                Test $ \n -> evalN n (omega :: Term ()) == Nothing),
 
               ("eval$$",
-               Test $ \n m -> trueIn (n+1) (fmap (== C m) (eval i >>= ($$ m)))),
+               Test $ \x -> trueIn  1 (fmap (== C x) (eval i >>= ($$ x)))),
 
               ("evalSteps",
-               Test $ \n m -> equalIn (n+3) m (i :@ i :@ Const m)),
+               Test $ \x -> equalIn 3 x (i :@ i :@ Const x)),
 
               ("id",
-               Test $ \n x -> equalIn (n+2) x (i :@ Const x)),
+               Test $ \x -> equalIn 2 x (i :@ Const x)),
 
               ("yTerminates",
-               Test $ \n x -> equalIn (n+7) x ((yComb :: Term Nat) :@ Lam (Lam 0) :@ Const x))
+               Test $ \x -> equalIn 7 x ((yComb :: Term Nat) :@ Lam (Lam 0) :@ Const x))
             ]
 
 testsRunner ts n = let next []                  = return ()
