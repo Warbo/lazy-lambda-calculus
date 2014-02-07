@@ -9,6 +9,8 @@ module Data.Nat where
 
 import Data.Data
 import Data.Typeable
+import Test.LazySmallCheck2012 hiding (Nat, Term, Const)
+import Test.LazySmallCheck2012.Core hiding (Term)
 
 -- Peano-style natural numbers
 data Nat = Z
@@ -56,10 +58,19 @@ instance Real Nat where
   toRational = toRational . toInteger
 
 instance Integral Nat where
- quotRem x y = let x' = toInteger x'
-                   y' = toInteger y'
-                   (q, r) = quotRem x' y' in
-               (fromInteger q, fromInteger r)
+  quotRem x y = let x' = toInteger x'
+                    y' = toInteger y'
+                    (q, r) = quotRem x' y' in
+                (fromInteger q, fromInteger r)
+  toInteger = toInteger . natToInt
+
+instance Enum Nat where
+  toEnum   = fromInteger . fromIntegral
+  fromEnum = natToInt
+
+instance Serial Nat where
+  series = cons0 Z \/
+           cons1 S
 
 lookUp' :: [a] -> Nat -> Maybe a
 lookUp' []      _    = Nothing

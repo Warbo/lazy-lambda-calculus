@@ -17,13 +17,10 @@ import Data.Data
 import Data.Language.LC
 import Data.Map
 import Data.Maybe
+import Data.Test
 import Data.Typeable
 import Test.LazySmallCheck2012 hiding (Nat, Term, Const)
-import Test.LazySmallCheck2012.Core hiding (Term)
-
-instance Serial Nat where
-  series = cons0 Z \/
-           cons1 S
+import Test.LazySmallCheck2012.Core hiding (Term, C)
 
 -- Randomly generate terms
 instance Serial a => Serial (Term a) where
@@ -31,66 +28,43 @@ instance Serial a => Serial (Term a) where
            cons1 Lam \/
            cons2 (:@)
 
-data Test = forall a. (Typeable a,
-                       Data a,
-                       Testable a) => Test a
+equalIn n x y = trueIn n (fmap (== C x) (eval y))
 
-runDepthCheck n (Test t) = depthCheck n t
+lcTestMap :: Map String Test
+lcTestMap = let i = (Lam 0 :: Term Nat) in
+            fromList [
+              ("evalCoterminates",
+               Test $ \x n -> let x' = evalN n (x :: Term Nat) in
+                              closed x ==> isJust x' || isNothing x'),
 
-fappC x = (`fapp` vc x)
+              ("omegaDiverges",
+               Test $ \n -> evalN n (omega :: Term ()) == Nothing),
 
-tests :: Map String Test
-tests = let i = Lam 0 :: Term Nat in
-        fromList [
-         ("evalCoterminates",
-         Test $ \x n -> let x' = evalN (n `div` 2) (x :: Term ()) in
-                        closed x ==> isJust x' || isNothing x'),
+              ("eval$$",
+               Test $ \n m -> trueIn (n+1) (fmap (== C m) (eval i >>= ($$ m)))),
 
-         ("noVarLeaks",
-          Test $ \x n m -> closed (x :: Term ()) ==>
-                           notFalseIn n (fmap (V (Var m) /=) (eval x))),
+              ("evalSteps",
+               Test $ \n m -> equalIn (n+3) m (i :@ i :@ Const m)),
 
-         ("omegaDiverges",
-          Test $ \n -> evalN n (omega :: Term ()) == Nothing),
+              ("id",
+               Test $ \n x -> equalIn (n+2) x (i :@ Const x)),
 
-         ("evalFapp",
-          Test $ \n m -> trueIn (n+1) (fmap (== vc m) (eval i >>= (`fapp` vc m)))),
+              ("yTerminates",
+               Test $ \n x -> equalIn (n+7) x ((yComb :: Term Nat) :@ Lam (Lam 0) :@ Const x))
+            ]
 
-         ("evalSteps",
-          Test $ \n m -> trueIn (n+2) (fmap (== vc m) (eval (i :@ i) >>= (`fapp` vc m)))),
+testsRunner ts n = let next []                  = return ()
+                       next ((name, Test t):xs) = do print name
+                                                     depthCheck n t
+                                                     next xs in
+                   next . toList $ ts
 
-         ("idNormal",
-          Test $ \n m -> trueIn (n+2) (fmap (== vc m) (eval (i :@ Const m)))),
+testRunner ts n t = case Data.Map.lookup t ts of
+                      Nothing       -> error ("Could not find test " ++ t)
+                      Just (Test x) -> depthCheck n x
 
-         ("evalZFalse",
-          Test $ \n m -> trueIn (n+5) (fmap (== vc (m :: Nat)) (eval (zComb :@ selfFalse :@ Const m)))),
-
-
-         ("id",
-          Test $ \n x -> trueIn (n+2) (fmap (== vc x) (eval (i :@ Const x)))),
-
-         ("true",
-          Test $ \n x y -> let t = selfTrue :@ Const x :@ y in
-                           closed (t :: Term ()) ==>
-                           notFalseIn n (fmap (== vc x) (eval t))),
-
-         ("false",
-          Test $ \n x y -> let f = selfFalse :@ x :@ Const y in
-                           closed (f :: Term ()) ==>
-                           notFalseIn n (fmap (== vc y) (eval f)))
-    ]
-
-runTests n = let next []                  = return ()
-                 next ((name, Test t):xs) = do print name
-                                               depthCheck n t
-                                               next xs in
-             next . toList $ tests
-
-runTest n t = case Data.Map.lookup t tests of
-                Nothing       -> error ("Could not find test " ++ t)
-                Just (Test x) -> depthCheck n x
-
-omega = Lam (0 :@ 0) :@ Lam (0 :@ 0)
+lcTests = testsRunner lcTestMap
+lcTest  = testRunner  lcTestMap
 
 {-
 plus  Z    y = y
