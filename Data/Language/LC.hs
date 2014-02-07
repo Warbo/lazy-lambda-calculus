@@ -61,9 +61,9 @@ type Env a = [Partial (Val a)]
 eval' :: Term a -> Env a -> Partial (Val a)
 eval' (Const c) env = Now (C c)
 eval' (Var   n) env = let Just x = lookUp env n in x
-eval' (Lam   f) env = Now (F (\a -> eval' f (a : env)))
-eval' (l :@ r)  env = do F l' <- eval' l env
-                         Later (l' (eval' r env))
+eval' (Lam   f) env = Now (F (\a -> eval' f (a:env)))
+eval' (f :@  x) env = do F f' <- eval' f env
+                         Later (f' (eval' x env))
 
 {-
 eval' :: Term a -> Env a -> Partial (Val a)
