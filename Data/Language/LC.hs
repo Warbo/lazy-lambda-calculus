@@ -60,7 +60,7 @@ type Env a = [Partial (Val a)]
 -- Fully evaluates a Term, using Partial to handle nontermination
 eval' :: Term a -> Env a -> Partial (Val a)
 eval' (Const c) env = Now (C c)
-eval' (Var   n) env = let Just x = lookUp' env n in x
+eval' (Var   n) env = let Just x = lookUp env n in x
 eval' (Lam   f) env = Now (F (\a -> eval' f (a : env)))
 eval' (l :@ r)  env = do F l' <- eval' l env
                          Later (l' (eval' r env))
@@ -68,7 +68,7 @@ eval' (l :@ r)  env = do F l' <- eval' l env
 {-
 eval' :: Term a -> Env a -> Partial (Val a)
 eval' (Const c) env = return (V (Const c))
-eval' (Var n)   env = return $ case lookUp' env n of
+eval' (Var n)   env = return $ case lookUp env n of
                                  Just x  -> x
                                  Nothing -> error $ "Lookup " ++ show n
 eval' (Lam f)   env = return (F (\a -> eval' f (a:env)))

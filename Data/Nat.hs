@@ -72,12 +72,7 @@ instance Serial Nat where
   series = cons0 Z \/
            cons1 S
 
-lookUp' :: [a] -> Nat -> Maybe a
-lookUp' []      _    = Nothing
-lookUp' (x:xs)  Z    = Just x
-lookUp' (x:xs) (S n) = lookUp' xs n
-
-lookUp :: Show a => [a] -> Nat -> a
-lookUp l n = case lookUp' l n of
-                  Just x  -> x
-                  Nothing -> error ("lookUp " ++ show l ++ " " ++ show n)
+lookUp :: [a] -> Nat -> Maybe a
+lookUp []      _    = Nothing
+lookUp (x:xs)  Z    = Just x
+lookUp (x:xs) (S n) = lookUp xs n
