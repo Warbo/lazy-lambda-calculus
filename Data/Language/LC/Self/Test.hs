@@ -24,40 +24,29 @@ import Data.Test
 import Test.LazySmallCheck2012 hiding (Nat, Term, Const)
 import Test.LazySmallCheck2012.Core hiding (Term, C)
 
+encodeDecode :: Encodable a => a -> Partial (Val a)
+encodeDecode = decode . mse
+
+encodeDecodeIn n x = (force n (encodeDecode x)) == Just (C x)
+
 selfTestMap :: Map String Test
 selfTestMap = fromList [
 
                 ("()",
-                 Test $ \x -> let u = mse () :@ Const x in
-                              closed (u :: Term Nat) ==>
-                              equalIn 2 x u),
+                 Test $ encodeDecodeIn 2 ()),
 
-                ("true",
-                 Test $ \n x y -> let t = mse True :@ Const x :@ y in
-                                  closed (t :: Term Nat) ==>
-                                  notDiffIn n x t),
+                ("Bool",
+                 Test $ \b -> encodeDecodeIn 3 (b :: Bool)),
 
-                ("false",
-                 Test $ \n x y -> let f = mse False :@ x :@ Const y in
-                                  closed (f :: Term Nat) ==>
-                                  notDiffIn n y f),
+                ("Nat",
+                 Test $ \n -> encodeDecodeIn (3+n) (n :: Nat))
 
-                ("z",
-                 Test $ \n x y -> let z = mse Z :@ Const x :@ y in
-                                  closed (z :: Term Nat) ==>
-                                  notDiffIn n x z),
-{-
-                ("s",
-                 Test $ \n m -> let s = mse (S m)
-                                    wrap  Z    x = x :@ Const Z
-                                    wrap (S n) x = wrap n x :@ Const (S n) in
-                                notDiffIn n 0 (wrap m s)),
--}
-                ("zFalse",
-                 Test $ \x -> equalIn 5 x (zComb :@ mse False :@ Const (x :: Int)))
+
               ]
 
 decodeNat n x = closed x ==> evalN n (mse (S Z) :@ Const Z :@ x) /= Just (C (S Z))
+
+
 
 selfTest  = testRunner  selfTestMap
 selfTests = testsRunner selfTestMap

@@ -23,18 +23,9 @@ instance Encodable Nat where
   mse x = let wrap Z = 1
               wrap (S n) = 0 :@ wrap n in
           Lam (Lam (wrap x))
-{-
-  decode x = let s :: Partial Val Nat -> Partial Val Nat
-                 s = fmap s'
-                 s' :: Val Nat -> Val Nat
-                 s' (C n) = C (S n)
-                 s' (F f) = F (F (fmap f)) -- f :: Partial Val Nat -> Partial Val Nat
-                 s y = do y' <- y
-                          return (case y' of
-                                    C y'' -> C (S y'')
-                                    F f   -> F (s . f)) in
-             eval (x :@ Const Z) >>= ($$ F s)
--}
+
+  decode x = eval' (x :@ 0 :@ 1) [Now (C 0), Now (F (fmap (valMap S)))]
+
 instance Encodable a => Encodable (Partial a) where
   mse (Now   x) = Lam (Lam (1 :@ mse x))
   mse (Later x) = Lam (Lam (0 :@ mse x))
