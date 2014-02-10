@@ -22,7 +22,7 @@ import Data.Maybe
 import Data.Typeable
 import Data.Test
 import Test.LazySmallCheck2012 hiding (Nat, Term, Const)
-import Test.LazySmallCheck2012.Core hiding (Term)
+import Test.LazySmallCheck2012.Core hiding (Term, C)
 
 selfTestMap :: Map String Test
 selfTestMap = fromList [
@@ -56,6 +56,8 @@ selfTestMap = fromList [
                 ("zFalse",
                  Test $ \x -> equalIn 5 x (zComb :@ mse False :@ Const (x :: Int)))
               ]
+
+decodeNat n x = closed x ==> evalN n (mse (S Z) :@ Const Z :@ x) /= Just (C (S Z))
 
 selfTest  = testRunner  selfTestMap
 selfTests = testsRunner selfTestMap

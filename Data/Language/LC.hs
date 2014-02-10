@@ -50,6 +50,17 @@ instance Eq a => Eq (Val a) where
   (F x) == (F y) = error "Cannot compare function Vals"
   _     == _     = False
 
+instance Functor Val where
+  fmap f (C x) = C (f x)
+  fmap f (F g) = error "Cannot map embedded function"
+
+valMap :: (a -> a) -> Val a -> Val a
+valMap f (C x) = C (f x)
+valMap f (F g) = F ((fmap (valMap f)) . g)
+
+valLift :: (a -> a) -> Val a
+valLift f = F (fmap (fmap f))
+
 -- Apply a function Val to an argument
 ($$) (F f) x = f (Now (C x))
 ($$) (C f) x = error "Cannot apply C as a function"
@@ -64,20 +75,6 @@ eval' (Var   n) env = let Just x = lookUp env n in x
 eval' (Lam   f) env = Now (F (\a -> eval' f (a:env)))
 eval' (f :@  x) env = do F f' <- eval' f env
                          Later (f' (eval' x env))
-
-{-
-eval' :: Term a -> Env a -> Partial (Val a)
-eval' (Const c) env = return (V (Const c))
-eval' (Var n)   env = return $ case lookUp env n of
-                                 Just x  -> x
-                                 Nothing -> error $ "Lookup " ++ show n
-eval' (Lam f)   env = return (F (\a -> eval' f (a:env)))
-eval' (l :@ r)  env = do l' <- eval' l env
-                         case l' of
-                           F k -> do a <- eval' r env
-                                     Later (k a)
-                           V x -> error "Tried to apply argument to non-function"
--}
 
 -- Entry point for eval'
 eval t | closed t  = eval' t []
