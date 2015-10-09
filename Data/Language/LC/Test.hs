@@ -45,7 +45,10 @@ lcTestMap = let i = (Lam 0 :: Term Nat) in
                Test $ \x -> equalIn 2 x (i :@ Const x)),
 
               ("yTerminates",
-               Test $ \x -> equalIn 7 x ((yComb :: Term Nat) :@ Lam (Lam 0) :@ Const x))
+               Test $ \x -> equalIn 7 x ((yComb :: Term Nat) :@ Lam (Lam 0) :@ Const x)),
+
+              ("zConst",
+               Test $ \x -> equalIn 5 x (zComb :@ Lam (Lam 0) :@ Const (x :: Int)))
             ]
 
 testsRunner ts n = let next []                  = return ()

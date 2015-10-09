@@ -1,28 +1,50 @@
 module Data.Language.LC.Self where
 
+import Debug.Trace
+
 import Control.Monad.Partial
 import Data.Language.LC
 import Data.Nat
 
 -- Lambda calculus inside lambda calculus, using Morgensen-Scott encoding
 
+decode :: (Encodable a) => Term a -> Partial (Val a)
+decode = (>>= unmse) . eval
+
+extractC :: Partial (Val a) -> Partial (Maybe a)
+extractC = let f (C x) = Just x
+               f  _    = Nothing in
+           fmap f
+
 class Encodable a where
-  mse :: a -> Term b
+  mse   ::     a -> Term  b
+  unmse :: Val b -> Partial (Val a)
 
 instance Encodable () where
-  mse () = Lam 0
+  mse  () = Lam 0
+  unmse   = ($$ ()) . castVal
 
 instance Encodable Bool where
   mse True  = Lam (Lam 1)
   mse False = Lam (Lam 0)
+  unmse x = (x $$ True) >>= ($$ False)
 
 instance Encodable Nat where
-  mse  Z    = Lam (Lam 1)
-  mse (S x) = Lam (Lam (0 :@ mse x))
+  mse x = let wrap Z = 1
+              wrap (S n) = 0 :@ wrap n in
+          Lam (Lam (wrap x))
 
-instance Encodable a => Encodable (Partial a) where
+  unmse x = eval' (0 :@ 1 :@ 2) [Now x, Now (C 0), Now (F (fmap (valMap S)))]
+{-
+instance (Encodable a, Show a) => Encodable (Partial a) where
   mse (Now   x) = Lam (Lam (1 :@ mse x))
   mse (Later x) = Lam (Lam (0 :@ mse x))
+
+  unmse x = eval' (0 :@ 1 :@ 2) [Now x,
+                                 Now (F (\y -> do y'    <- y
+                                                  C y'' <- unmse y'
+                                                  return (C y''))),
+                                 Now (F (fmap (valMap Later)))]
 
 instance Encodable a => Encodable [a] where
   mse []     = Lam (Lam 1)
@@ -68,3 +90,4 @@ selfLookup = zComb (\g l m -> m (l id (\a b -> a))
 selfLookup = let z = 1 :@ mse () :@ mse Z
                  s = Lam (2 :@ mse () :@ Lam (Lam (5 :@ 0 :@ 2))) in
              zComb :@ Lam (Lam (Lam (0 :@ z :@ s)))
+-}
