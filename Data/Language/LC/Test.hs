@@ -2,12 +2,6 @@
 {-# Language MultiParamTypeClasses #-}
 {-# Language FlexibleContexts #-}
 {-# Language ExistentialQuantification #-}
-{-# Language GeneralizedNewtypeDeriving #-}
-{-# Language StandaloneDeriving #-}
-{-# Language DeriveDataTypeable #-}
-{-# Language DeriveFunctor #-}
-{-# Language DeriveFoldable #-}
-{-# Language DeriveTraversable #-}
 
 module Data.Language.LC.Test where
 
@@ -39,7 +33,7 @@ lcTestMap = let i = (Lam 0 :: Term Nat) in
                               closed x ==> isJust x' || isNothing x'),
 
               ("omegaDiverges",
-               Test $ \n -> evalN n (omega :: Term ()) == Nothing),
+               Test $ \n -> isNothing (evalN n (omega :: Term ()))),
 
               ("eval$$",
                Test $ \x -> trueIn  1 (fmap (== C x) (eval i >>= ($$ x)))),

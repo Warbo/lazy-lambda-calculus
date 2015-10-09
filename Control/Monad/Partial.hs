@@ -29,11 +29,7 @@ force n (Now   x) = Just x
 force n (Later x) = force (n-1) x
 
 -- Conservative decision procedure
-trueIn n x = case force n x of
-               Just b  -> b
-               Nothing -> False
+trueIn n x = fromMaybe False (force n x)
 
 -- Lax decision procedure
-notFalseIn n x = case force n x of
-                   Just b  -> b
-                   Nothing -> True
+notFalseIn n x = fromMaybe True (force n x)
