@@ -1,11 +1,6 @@
 {-# Language FlexibleInstances          #-}
 {-# Language MultiParamTypeClasses      #-}
-{-# Language GeneralizedNewtypeDeriving #-}
-{-# Language StandaloneDeriving         #-}
 {-# Language DeriveDataTypeable         #-}
-{-# Language DeriveFunctor              #-}
-{-# Language DeriveFoldable             #-}
-{-# Language DeriveTraversable          #-}
 
 module Data.Language.LC where
 
@@ -80,8 +75,8 @@ eval' (l :@ r)  env = do l' <- eval' l env
 -}
 
 -- Entry point for eval'
-eval t | closed t  = eval' t []
-eval t | otherwise = error "Can only evaluate closed Terms"
+eval t | closed t = eval' t []
+eval t            = error "Can only evaluate closed Terms"
 
 -- Abbreviation for performing N steps
 evalN n = force n . eval
@@ -104,4 +99,4 @@ omega = Lam (0 :@ 0) :@ Lam (0 :@ 0)
 yComb = Lam (Lam (1 :@ (0 :@ 0)) :@ Lam (1 :@ (0 :@ 0)))
 
 -- Z combinator
-zComb = Lam ((Lam (1 :@ (Lam (1 :@ 1 :@ 0)))) :@ (Lam (1 :@ (Lam (1 :@ 1 :@ 0)))))
+zComb = Lam (Lam (1 :@ Lam (1 :@ 1 :@ 0)) :@ Lam (1 :@ Lam (1 :@ 1 :@ 0)))

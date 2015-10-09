@@ -1,9 +1,4 @@
-{-# Language GeneralizedNewtypeDeriving #-}
-{-# Language StandaloneDeriving         #-}
 {-# Language DeriveDataTypeable         #-}
-{-# Language DeriveFunctor              #-}
-{-# Language DeriveFoldable             #-}
-{-# Language DeriveTraversable          #-}
 
 module Data.Nat where
 
