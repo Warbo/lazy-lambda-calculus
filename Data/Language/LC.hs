@@ -45,6 +45,30 @@ instance Eq a => Eq (Val a) where
   (F x) == (F y) = error "Cannot compare function Vals"
   _     == _     = False
 
+instance Functor Val where
+  fmap f (C x) = C (f x)
+  fmap f (F g) = error "Cannot map embedded function"
+
+valMap :: (a -> b) -> Val a -> Val b
+valMap f (C x) = C (f x)
+valMap f (F g) = error "Cannot map over function"
+
+valLift :: (a -> a) -> Val a
+valLift f = F (fmap (fmap f))
+
+liftVal :: Val a -> Val (Either b a)
+liftVal (C x) = C (Right x)
+liftVal (F f) = F (fmap liftVal . f . fmap lowerVal)
+
+lowerVal :: Val (Either a b) -> Val b
+lowerVal (C (Right x)) = C x
+lowerVal (F f) = F (fmap lowerVal . f . fmap liftVal)
+
+flipVal :: Val (Either a b) -> Val (Either b a)
+flipVal (C (Left  x)) = C (Right x)
+flipVal (C (Right x)) = C (Left  x)
+flipVal (F f)         = F (fmap flipVal . f . fmap flipVal)
+
 -- Apply a function Val to an argument
 ($$) (F f) x = f (Now (C x))
 ($$) (C f) x = error "Cannot apply C as a function"
@@ -56,23 +80,9 @@ type Env a = [Partial (Val a)]
 eval' :: Term a -> Env a -> Partial (Val a)
 eval' (Const c) env = Now (C c)
 eval' (Var   n) env = let Just x = lookUp env n in x
-eval' (Lam   f) env = Now (F (\a -> eval' f (a : env)))
-eval' (l :@ r)  env = do F l' <- eval' l env
-                         Later (l' (eval' r env))
-
-{-
-eval' :: Term a -> Env a -> Partial (Val a)
-eval' (Const c) env = return (V (Const c))
-eval' (Var n)   env = return $ case lookUp env n of
-                                 Just x  -> x
-                                 Nothing -> error $ "Lookup " ++ show n
-eval' (Lam f)   env = return (F (\a -> eval' f (a:env)))
-eval' (l :@ r)  env = do l' <- eval' l env
-                         case l' of
-                           F k -> do a <- eval' r env
-                                     Later (k a)
-                           V x -> error "Tried to apply argument to non-function"
--}
+eval' (Lam   f) env = Now (F (\a -> eval' f (a:env)))
+eval' (f :@  x) env = do F f' <- eval' f env
+                         Later (f' (eval' x env))
 
 -- Entry point for eval'
 eval t | closed t = eval' t []
@@ -91,6 +101,12 @@ freeVars n (l :@ r)  = freeVars n l && freeVars n r
 -- Predicate for ensuring a Term has no free variables
 closed :: Term a -> Bool
 closed = freeVars 0
+
+castTerm :: Term a -> Term b
+castTerm (Const x) = error "Cannot cast Constants"
+castTerm (Var   n) = Var n
+castTerm (Lam   f) = Lam (castTerm f)
+castTerm (l :@  r) = castTerm l :@ castTerm r
 
 -- Infinite loop
 omega = Lam (0 :@ 0) :@ Lam (0 :@ 0)
