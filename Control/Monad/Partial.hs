@@ -2,12 +2,7 @@
 {-# Language MultiParamTypeClasses #-}
 {-# Language FlexibleContexts #-}
 {-# Language ExistentialQuantification #-}
-{-# Language GeneralizedNewtypeDeriving #-}
-{-# Language StandaloneDeriving #-}
 {-# Language DeriveDataTypeable #-}
-{-# Language DeriveFunctor #-}
-{-# Language DeriveFoldable #-}
-{-# Language DeriveTraversable #-}
 
 module Control.Monad.Partial where
 

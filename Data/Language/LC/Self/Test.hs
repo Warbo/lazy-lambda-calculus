@@ -37,7 +37,7 @@ bar :: (Val a -> Partial (Val a))
 encodeDecode :: Encodable a => a -> Partial (Val a)
 encodeDecode = decode . mse
 
-encodeDecodeIn n x = (force n (encodeDecode x)) == Just (C x)
+encodeDecodeIn n x = force n (encodeDecode x) == Just (C x)
 
 mkTest :: (Serial a, Eq a, Encodable a) => (a -> Nat) -> Test
 mkTest f = Test $ \x -> encodeDecodeIn (f x) x
