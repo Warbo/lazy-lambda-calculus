@@ -7,6 +7,7 @@
 module Control.Monad.Partial where
 
 import Data.Data
+import Data.Maybe
 import Data.Nat
 import Data.Typeable
 import Test.LazySmallCheck2012 hiding (Nat, Term, Const)
@@ -21,6 +22,12 @@ data Partial a = Now a
 instance Functor Partial where
   fmap f (Now   x) = Now   (f x)
   fmap f (Later x) = Later (fmap f x)
+
+-- Delay applications until we have a function (if ever)
+instance Applicative Partial where
+  pure = Now
+  (Now   f) <*> x =        f <$> x
+  (Later f) <*> x = Later (f <*> x)
 
 -- Compose functions once the first one halts (if ever)
 instance Monad Partial where
@@ -49,3 +56,10 @@ trueIn n x = fromMaybe False (force n x)
 
 -- Lax decision procedure
 notFalseIn n x = fromMaybe True (force n x)
+
+-- We can use infinite proofs to get around type constraints
+undefined' :: Partial a
+undefined' = Later undefined'
+
+cast' :: (Typeable a, Typeable b) => a -> Partial b
+cast' x = fromMaybe undefined' (cast x)

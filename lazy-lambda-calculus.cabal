@@ -14,7 +14,7 @@ build-type:          Simple
 cabal-version:       >=1.8
 
 library
-  exposed-modules:     LC, Control.Monad.Partial
+  exposed-modules:     Control.Monad.Partial
                      , Data.Nat
                      , Data.Test
                      , Data.Language.LC
@@ -26,4 +26,11 @@ library
                      , deepseq
                      , syb
                      , template-haskell
+                     , lazysmallcheck2012
 
+executable LC
+  main-is:             Main.hs
+  build-depends:       base ==4.*
+                     , lazy-lambda-calculus
+                     , containers
+                     , lazysmallcheck2012

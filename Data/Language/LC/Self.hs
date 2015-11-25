@@ -5,6 +5,7 @@ import Debug.Trace
 import Control.Monad.Partial
 import Data.Language.LC
 import Data.Nat
+import Data.Typeable
 
 -- Lambda calculus inside lambda calculus, using Morgensen-Scott encoding
 
@@ -16,25 +17,25 @@ extractC = let f (C x) = Just x
                f  _    = Nothing in
            fmap f
 
-class Encodable a where
-  mse   ::     a -> Term  b
-  unmse :: Val b -> Partial (Val a)
+class (Typeable a) => Encodable a where
+  mse   :: a -> Term  b
+  unmse :: (Typeable b) => Val b -> Partial (Val a)
 
 instance Encodable () where
   mse  () = Lam 0
-  unmse   = ($$ ()) . castVal
+  unmse x = cast' x >>= ($$ ())
 
 instance Encodable Bool where
   mse True  = Lam (Lam 1)
   mse False = Lam (Lam 0)
-  unmse x = (x $$ True) >>= ($$ False)
+  unmse x = cast' x >>= ($$ True) >>= ($$ False)
 
 instance Encodable Nat where
   mse x = let wrap Z = 1
               wrap (S n) = 0 :@ wrap n in
           Lam (Lam (wrap x))
 
-  unmse x = eval' (0 :@ 1 :@ 2) [Now x, Now (C 0), Now (F (fmap (valMap S)))]
+  unmse x = (eval' (0 :@ 1 :@ 2) [cast' x, Now (C 0), Now (F (fmap (valMap S)))])
 {-
 instance (Encodable a, Show a) => Encodable (Partial a) where
   mse (Now   x) = Lam (Lam (1 :@ mse x))

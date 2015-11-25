@@ -2,6 +2,7 @@
 {-# Language MultiParamTypeClasses #-}
 {-# Language FlexibleContexts #-}
 {-# Language ExistentialQuantification #-}
+{-# Language DeriveDataTypeable #-}
 
 module Data.Language.LC.Self.Test where
 
@@ -25,15 +26,16 @@ instance Serial a => Serial (Wrap a) where
   series = cons1 W
 
 instance (Encodable a, Show a) => Encodable (Wrap a) where
-  --mse (W x) = Lam (0 :@ mse x)
-  --unmse x = eval' (0 :@ 1) [Now x,
-  --                          Now (F (fmap (valMap W) . (>>= unmse)))]
-
+  mse (W x) = Lam (0 :@ mse x)
+  unmse x = eval' (0 :@ 1) [cast' x,
+                            Now (F (fmap (valMap W) . (>>= unmse)))]
+{-
 foo :: (Val a -> Partial (Val a)) -> Val (Wrap a) -> Partial (Val (Wrap a))
 foo m f = eval' (0 :@ 1) [Now f, Now (F (>>= bar m))]
 
 bar :: (Val a -> Partial (Val a))
-
+bar = Now
+-}
 encodeDecode :: Encodable a => a -> Partial (Val a)
 encodeDecode = decode . mse
 
@@ -60,7 +62,7 @@ selfTestMap = fromList [
 
               ]
 
---decodeNat n x = closed x ==> evalN n (mse (S Z) :@ Const Z :@ x) /= Just (C (S Z))
+decodeNat n x = closed x ==> evalN n (mse (S Z) :@ Const Z :@ x) /= Just (C (S Z))
 
 
 
