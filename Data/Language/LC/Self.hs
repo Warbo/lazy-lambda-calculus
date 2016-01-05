@@ -35,7 +35,7 @@ instance Encodable Nat where
               wrap (S n) = 0 :@ wrap n in
           Lam (Lam (wrap x))
 
-  unmse x = (eval' (0 :@ 1 :@ 2) [cast' x, Now (C 0), Now (F (fmap (valMap S)))])
+  unmse x = eval' (0 :@ 1 :@ 2) [cast' x, Now (C 0), Now (F (fmap (valMap S)))]
 {-
 instance (Encodable a, Show a) => Encodable (Partial a) where
   mse (Now   x) = Lam (Lam (1 :@ mse x))
