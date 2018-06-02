@@ -21,7 +21,8 @@ import Test.LazySmallCheck2012.Core hiding (Term, C, mkTest)
 
 import Debug.Trace
 
-data Wrap a = W a deriving (Eq, Show, Data, Typeable)
+newtype Wrap a = W a deriving (Eq, Show, Data, Typeable)
+
 instance Serial a => Serial (Wrap a) where
   series = cons1 W
 
