@@ -1,4 +1,6 @@
 dist/
+dist-newstyle/
+result
 *.hi
 *.o
 LC
