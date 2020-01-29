@@ -29,6 +29,7 @@ library
                      , lazysmallcheck2012
 
 executable LC
+  hs-source-dirs:      lc
   main-is:             Main.hs
   build-depends:       base ==4.*
                      , lazy-lambda-calculus
