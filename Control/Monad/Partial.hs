@@ -6,12 +6,15 @@
 
 module Control.Monad.Partial where
 
-import Data.Data
-import Data.Maybe
-import Data.Nat
-import Data.Typeable
-import Test.LazySmallCheck2012 hiding (Nat, Term, Const)
-import Test.LazySmallCheck2012.Core hiding (Term, C)
+import           Control.Monad
+import qualified Control.Monad.Fail as Fail
+import           Control.Monad.Fix
+import           Data.Data
+import           Data.Maybe
+import           Data.Nat
+import           Data.Typeable
+import           Test.LazySmallCheck2012 hiding (Nat, Term, Const)
+import           Test.LazySmallCheck2012.Core hiding (Term, C)
 
 -- Partial results are either a value (Now) or a partial result (Later).
 data Partial a = Now a
@@ -35,6 +38,27 @@ instance Monad Partial where
   (Now   x) >>= f = f x
   (Later x) >>= f = Later (x >>= f)
 
+  -- Backwards compatibility
+  fail = Fail.fail
+
+-- Failure (e.g. a failed pattern-match) is an infinite loop
+instance Fail.MonadFail Partial where
+  fail _ = fix Later
+
+-- Choose between values by picking whichever halts first. This is like the
+-- 'min' function on Nat, and hence associative; likewise infinite loops are the
+-- identity. If it's a tie, the first argument is returned (arbitrarily), which
+-- breaks commutativity.
+instance Alternative Partial where
+  empty               = Fail.fail "empty"
+  Now   x <|> _       = Now x
+  _       <|> Now   y = Now y
+  Later x <|> Later y = Later (x <|> y)
+
+-- Inherit mzero and mplus from Alternative
+instance MonadPlus Partial where
+
+-- Generate arbitrary delayed values
 instance Serial a => Serial (Partial a) where
   series = cons1 Now \/ cons1 Later
 
@@ -57,9 +81,5 @@ trueIn n x = fromMaybe False (force n x)
 -- Lax decision procedure
 notFalseIn n x = fromMaybe True (force n x)
 
--- We can use infinite proofs to get around type constraints
-undefined' :: Partial a
-undefined' = Later undefined'
-
 cast' :: (Typeable a, Typeable b) => a -> Partial b
-cast' x = fromMaybe undefined' (cast x)
+cast' x = fromMaybe mzero (cast x)
